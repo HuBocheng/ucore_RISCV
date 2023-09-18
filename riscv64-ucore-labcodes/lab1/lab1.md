@@ -41,3 +41,28 @@
 - 更新时间中断计数器`ticks`：每次时钟中断发生时，更新计数器`ticks`的值，`ticks++`；
 - 100次时钟中断后打印消息：当计数器`ticks`加到100时，表示发生了100次时钟中断，此时调用函数`print_ticks()`打印消息`100ticks`，并将计数器`ticks`清零；
 - 检查是否需要关机：使用变量`num`记录打印消息的次数，当计数器`ticks`累加到100时，`num++`。当`num`为10时，表示已经打印了10次消息，此时调用函数`sbi_shutdown()`关机。
+
+**运行结果**：
+```bash
+    Special kernel symbols:
+    entry  0x000000008020000a (virtual)
+    etext  0x00000000802009a0 (virtual)
+    edata  0x0000000080204010 (virtual)
+    end    0x0000000080204028 (virtual)
+    Kernel executable memory footprint: 17KB
+    ++ setup timer interrupts
+    100 ticks
+    100 ticks
+    100 ticks
+    100 ticks
+    100 ticks
+    100 ticks
+    100 ticks
+    100 ticks
+    100 ticks
+    100 ticks
+    100 ticks
+```
+约为1秒钟打印一次`100 ticks`，共打印了10次，之后关机。
+
+**定时器中断处理流程**：
