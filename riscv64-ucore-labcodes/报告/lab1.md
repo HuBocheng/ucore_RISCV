@@ -243,14 +243,18 @@ void intr_enable(void) { set_csr(sstatus, SSTATUS_SIE); }
 
 在 `SAVE_ALL` 宏中：
 
-1. 堆栈指针首先被减少 `36 * REGBYTES`，以为所有寄存器预留空间。其中 `REGBYTES` 是一个预定义的常数，表示一个寄存器的字节大小。在 RISC-V 32位架构中`REGBYTES` 为4，在 RISC-V 64位架构中`REGBYTES` 为8。
+1. 先保存原先的栈顶指针到`sscratch`，之后堆栈指针首先被减少 `36 * REGBYTES`，以为所有寄存器预留空间,空间可以放下一个`trapFrame`结 构 体。其中 `REGBYTES` 是一个预定义的常数，表示一个寄存器的字节大小。在 RISC-V 32位架构中`REGBYTES` 为4，在 RISC-V 64位架构中`REGBYTES` 为8。
+
 2. 接下来，所有的 `x` 寄存器（通用寄存器）都被保存到栈上，从地址 `sp` 开始。例如：
    - `x0` 保存在 `0*REGBYTES(sp)`
    - `x1` 保存在 `1*REGBYTES(sp)`
    - `x3` 保存在 `3*REGBYTES(sp)`
    - 以此类推...
-3. 一些特殊的 CSR 寄存器（例如 `sscratch`, `sstatus`, `sepc`, `sbadaddr`, 和 `scause`）被保存到特定的位置。例如：
+   
+3. 一些特殊的 CSR 寄存器（例如 `sscratch`, `sstatus`, `sepc`, `sbadaddr`, 和 `scause`）不能直接从*CSR*写到内存*,* 需要csrr把CSR读取到 通用寄存器 ， 再从通用寄存器STORE读到内存
+   
    - `s0`（即 `sscratch` 的旧值）保存在 `2*REGBYTES(sp)`
+   
    - `s1`（即 `sstatus`）保存在 `32*REGBYTES(sp)`
    - `s2`（即 `sepc`）保存在 `33*REGBYTES(sp)`
    - `s3`（即 `sbadaddr`）保存在 `34*REGBYTES(sp)`
@@ -465,6 +469,17 @@ static inline void trap_dispatch(struct trapframe *tf)
 
 ### 异常与中断处理
 
+异常 (Exception)，指在执行一条指令的过程中发生了错误，此时我们通过中断来处理错误。最常见的异常包括：访问无效内存地址、执行非法指令 (除零)、发生缺页等。他们有的可以恢复 (如缺页)，有的不可恢复 (如除零)，只能终止程序执行。
+
+外部中断 (Interrupt)，简称中断，指的是 CPU 的执行过程被外设发来的信号打断，此时我们必须先停下来对
+
+该外设进行处理。典型的有定时器倒计时结束、串口收到数据等。
+
+RISCV 架构还有大量的 **控制状态寄存器**
+
+- **sepc**(supervisor exception program counter)，它会记录触发中断的那条指令的地址；
+- **scause**，它会记录中断发生的原因，还会记录该中断是不是一个外部中断；
+- **stval**，它会记录一些中断处理所需要的辅助信息，比如指令获取 (instruction fetch)、访存、缺页异常，它会把发生问题的目标地址或者出错的指令记录下来，这样我们在中断处理程序中就知道处理目标了。
 
 
-# 四、实验中遇到的问题
+
