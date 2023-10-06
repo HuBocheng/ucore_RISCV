@@ -1,0 +1,20 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build my code",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "-g",
+                "your_source_file.c",
+                "-o",
+                "your_output_file"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

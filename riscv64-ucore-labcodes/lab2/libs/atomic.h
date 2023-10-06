@@ -19,7 +19,7 @@ static inline bool test_and_clear_bit(int nr, volatile void *addr)
 
 #define BITS_PER_LONG __riscv_xlen
 
-#if (BITS_PER_LONG == 64)
+#if (BITS_PER_LONG == 64) // #op是字符串化运算符，它会把op转换成字符串和前后拼接，.d表名双字，和CPU位数有关
 #define __AMO(op) "amo" #op ".d"
 #elif (BITS_PER_LONG == 32)
 #define __AMO(op) "amo" #op ".w"
@@ -27,8 +27,8 @@ static inline bool test_and_clear_bit(int nr, volatile void *addr)
 #error "Unexpected BITS_PER_LONG"
 #endif
 
-#define BIT_MASK(nr) (1UL << ((nr) % BITS_PER_LONG))
-#define BIT_WORD(nr) ((nr) / BITS_PER_LONG)
+#define BIT_MASK(nr) (1UL << ((nr) % BITS_PER_LONG)) // 首先计算nr模 BITS_PER_LONG，即nr在其所在字中的位置。然后1被左移那么多的位置，产生一个只有那一位被设置的掩码。
+#define BIT_WORD(nr) ((nr) / BITS_PER_LONG)          // 计算位nr在哪个字（word）中
 
 #define __test_and_op_bit(op, mod, nr, addr)                         \
     ({                                                               \
@@ -50,14 +50,15 @@ static inline bool test_and_clear_bit(int nr, volatile void *addr)
 #define __NOT(x) (~(x))
 
 /* *
- * set_bit - Atomically set a bit in memory
+ * set_bit - Atomically set a bit in memory,将nr这个数设置到addr地址处
  * @nr:     the bit to set
  * @addr:   the address to start counting from
  *
  * Note that @nr may be almost arbitrarily large; this function is not
- * restricted to acting on a single-word quantity.
+ * restricted to acting on a **single-word(32bits)** quantity.
  * */
-static inline void set_bit(int nr, volatile void *addr) {
+static inline void set_bit(int nr, volatile void *addr) // 原子操作或1来设置一位（传入mod是__NOP表示掩码不变）
+{
     __op_bit(or, __NOP, nr, ((volatile unsigned long *)addr));
 }
 
@@ -66,7 +67,8 @@ static inline void set_bit(int nr, volatile void *addr) {
  * @nr:     the bit to clear
  * @addr:   the address to start counting from
  * */
-static inline void clear_bit(int nr, volatile void *addr) {
+static inline void clear_bit(int nr, volatile void *addr) // 原子操作与0来清除（传入mod是__NOT表示掩码取反）
+{
     __op_bit(and, __NOT, nr, ((volatile unsigned long *)addr));
 }
 
@@ -75,8 +77,9 @@ static inline void clear_bit(int nr, volatile void *addr) {
  * @nr:     the bit to change
  * @addr:   the address to start counting from
  * */
-static inline void change_bit(int nr, volatile void *addr) {
-    __op_bit (xor, __NOP, nr, ((volatile unsigned long *)addr));
+static inline void change_bit(int nr, volatile void *addr)
+{
+    __op_bit(xor, __NOP, nr, ((volatile unsigned long *)addr));
 }
 
 /* *
@@ -84,7 +87,8 @@ static inline void change_bit(int nr, volatile void *addr) {
  * @nr:     the bit to test
  * @addr:   the address to count from
  * */
-static inline bool test_bit(int nr, volatile void *addr) {
+static inline bool test_bit(int nr, volatile void *addr)
+{
     return (((*(volatile unsigned long *)addr) >> nr) & 1);
 }
 
@@ -93,7 +97,8 @@ static inline bool test_bit(int nr, volatile void *addr) {
  * @nr:     the bit to set
  * @addr:   the address to count from
  * */
-static inline bool test_and_set_bit(int nr, volatile void *addr) {
+static inline bool test_and_set_bit(int nr, volatile void *addr)
+{
     return __test_and_op_bit(or, __NOP, nr, ((volatile unsigned long *)addr));
 }
 
@@ -102,7 +107,8 @@ static inline bool test_and_set_bit(int nr, volatile void *addr) {
  * @nr:     the bit to clear
  * @addr:   the address to count from
  * */
-static inline bool test_and_clear_bit(int nr, volatile void *addr) {
+static inline bool test_and_clear_bit(int nr, volatile void *addr)
+{
     return __test_and_op_bit(and, __NOT, nr, ((volatile unsigned long *)addr));
 }
 

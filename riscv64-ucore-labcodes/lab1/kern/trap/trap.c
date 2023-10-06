@@ -89,7 +89,7 @@ void print_regs(struct pushregs *gpr)
 
 void interrupt_handler(struct trapframe *tf)
 {
-    intptr_t cause = (tf->cause << 1) >> 1;
+    intptr_t cause = (tf->cause << 1) >> 1; // 抹 掉scause最 高 位 代 表 “ 这 是 中 断 不 是 异 常 ”的1
     switch (cause)
     {
     case IRQ_U_SOFT:

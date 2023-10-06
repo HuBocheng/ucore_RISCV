@@ -216,10 +216,10 @@ void clock_set_next_event(void) { sbi_set_timer(get_cycles() + timebase); }
 ```
 
 - `set_csr(sie, MIP_STIP);`：在 `sie` (Supervisor Interrupt Enable) 寄存器中设置 `MIP_STIP` 位，从而允许时钟中断。
-- `clock_set_next_event();`：预计这个函数设置下一个时钟中断事件。具体细节可能在另一部分代码中，但其基本目的是告诉硬件何时触发下一个时钟中断。
+- `clock_set_next_event();`：预计这个函数设置下一个时钟中断事件。具体细节在另一部分代码中，但其基本目的是告诉硬件何时触发下一个时钟中断。
 - `ticks = 0;`：初始化一个名为 `ticks` 的时间计数器为0。
 - `cprintf("++ setup timer interrupts\n");`：在控制台上打印一条消息表示时钟中断已经设置。
-- `clock_set_next_event`函数使用`get_cycles()` 这个函数返回当前的时间，`timebase`: 这个变量定义了两次连续的时钟中断之间的时间间隔，`sbi_set_timer(...)`: 这是一个RISC-V特定的函数，它告诉底层的 Supervisor Binary Interface (SBI) 在何时触发下一个时钟中断
+- `clock_set_next_event`函数使用`get_cycles()` 这个函数返回当前的时间，`timebase`: 这个变量定义了两次连续的时钟中断之间的时间间隔，`sbi_set_timer(...)`: 这是一个RISC-V特定的函数，它告诉底层的SBI在何时触发下一个时钟中断
 
 ```c
 // kern/driver/intr.c
