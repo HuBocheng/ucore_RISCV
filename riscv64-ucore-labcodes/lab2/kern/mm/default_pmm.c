@@ -241,9 +241,6 @@ basic_check(void)
     assert((p0 = alloc_page()) != NULL);
     assert((p1 = alloc_page()) != NULL);
     assert((p2 = alloc_page()) != NULL);
-    // cprintf("p0的虚拟地址: 0x%016lx.\n", (uintptr_t)p0);
-    // cprintf("p1的虚拟地址: 0x%016lx.\n", (uintptr_t)p1);
-    // cprintf("p2的虚拟地址: 0x%016lx.\n", (uintptr_t)p2);
 
     assert(p0 != p1 && p0 != p2 && p1 != p2);
     assert(page_ref(p0) == 0 && page_ref(p1) == 0 && page_ref(p2) == 0);
@@ -355,7 +352,6 @@ default_check(void)
     assert(count == 0);
     assert(total == 0);
 }
-
 // 这个结构体在
 const struct pmm_manager default_pmm_manager = {
     .name = "default_pmm_manager",

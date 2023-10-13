@@ -22,29 +22,41 @@ PMP1: 0x0000000000000000-0xffffffffffffffff (A,R,W,X)
 (THU.CST) os is loading ...
 Special kernel symbols:
   entry  0xffffffffc0200036 (virtual)
-  etext  0xffffffffc0201dce (virtual)
+  etext  0xffffffffc0201cba (virtual)
   edata  0xffffffffc0206018 (virtual)
   end    0xffffffffc0206480 (virtual)
 Kernel executable memory footprint: 26KB
-memory management: default_pmm_manager
+memory management: best_fit_pmm_manager
 physcial memory map:
   memory: 0x0000000007e00000, [0x0000000080200000, 0x0000000087ffffff].
 maxpa: 0x0000000088000000.
 npage: 0x0000000000088000.
 nbase: 0x0000000000080000.
 pages pythical address: 0x0000000080207000.
+pages[0] pythical address: 0x0000000080207000.
+pages[1] pythical address: 0x0000000080207028.
+pages[2] pythical address: 0x0000000080207050.
+pages[3] pythical address: 0x0000000080207078.
+pages[4] pythical address: 0x00000000802070a0.
 page结构体大小: 0x0000000000000028.
 freemem: 0x0000000080347000.
 mem_begin: 0x0000000080347000.
 mem_end: 0x0000000088000000.
-p的物理地址: 0x000000008020f318.
-p的物理地址: 0x000000008020f340.
-p的物理地址: 0x000000008020f368.
 mem_begin对应的页结构记录(结构体page)虚拟地址: 0xffffffffc020f318.
 mem_begin对应的页结构记录(结构体page)物理地址: 0x000000008020f318.
 可用空闲页的数目: 0x0000000000007cb9.
-kernel panic at kern/mm/default_pmm.c:173:
-    assertion failed: !PageReserved(p) && !PageProperty(p)
-Welcome to the kernel debug monitor!!
-Type 'help' for a list of commands.
-K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K> K
+check_alloc_page() succeeded!
+satp virtual address: 0xffffffffc0205000
+satp physical address: 0x0000000080205000
+++ setup timer interrupts
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks
+100 ticks

@@ -35,7 +35,9 @@ static void check_alloc_page(void);
 // init_pmm_manager - initialize a pmm_manager instance
 static void init_pmm_manager(void)
 {
-    pmm_manager = &default_pmm_manager;
+    // pmm_manager = &default_pmm_manager;
+    pmm_manager = &best_fit_pmm_manager;
+    // pmm_manager = &buddy_system_pmm_manager;
     cprintf("memory management: %s\n", pmm_manager->name);
     pmm_manager->init();
 }
@@ -115,8 +117,8 @@ static void page_init(void)
 
     // 求得总的物理页面数
     npage = maxpa / PGSIZE;
-    cprintf("npage: 0x%016lx.\n", npage); // test point
-    cprintf("nbase: 0x%016lx.\n", nbase); // test point
+    cprintf("npage: 0x%016lx.\n", npage); // test point,为0x8800_0
+    cprintf("nbase: 0x%016lx.\n", nbase); // test point，为0x8000_0
 
     // kernel在0x8020 0000开始加载，在end[]结束, pages是剩下的页的开始，是一个指向物理页面数组的指针
     // ROUNDUP是一个宏或函数，将给定的地址向上舍入到最接近的 PGSIZE 边界。保证最后的指针指向4kB对齐的地址
