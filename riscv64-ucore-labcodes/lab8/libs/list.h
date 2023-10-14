@@ -14,6 +14,9 @@
  * directly rather than using the generic single-entry routines.
  * */
 
+/*
+，如果我们把list_entry作为其他结构体的成员，就可以利用C语言结构体内存连续布局的特点，从``list_entry`的地址获得它所在的上一级结构体。
+*/
 struct list_entry {
     struct list_entry *prev, *next;
 };
