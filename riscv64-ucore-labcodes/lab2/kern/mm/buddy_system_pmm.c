@@ -77,9 +77,13 @@ static void buddy_split(size_t n)
     struct Page *page_b;
 
     page_a = le2page(list_next(&(buddy_array[n])), page_link);
-    page_b = page_a + (1 << (n - 1)); // 找到a的伙伴块b
+    page_b = page_a + (1 << (n - 1)); // 找到a的伙伴块b，因为是大块分割的，直接加2的n-1次幂就行
     page_a->property = n - 1;
     page_b->property = n - 1;
+
+    //???//
+    SetPageProperty(page_a);
+    SetPageProperty(page_b);
 
     list_del(list_next(&(buddy_array[n])));
     list_add(&(buddy_array[n - 1]), &(page_a->page_link));
@@ -149,7 +153,7 @@ buddy_system_init_memmap(struct Page *base, size_t n) // base是第一个页的�
     for (; p != base + pnum; p++)
     {
         assert(PageReserved(p));
-        p->flags = 0;
+        p->flags = 0;     // 清除所有flag标记
         p->property = -1; // 全部初始化为非头页
         set_page_ref(p, 0);
     }
@@ -158,7 +162,7 @@ buddy_system_init_memmap(struct Page *base, size_t n) // base是第一个页的�
     list_add(&(buddy_array[max_order]), &(base->page_link)); // 将第一页base插入数组的最后一个链表，作为初始化的最大块的头页
     // cprintf("base->page_link:%p\n", &(base->page_link));
     base->property = max_order; // 将第一页base的property设为最大块的2幂
-
+    SetPageProperty(base);      // ？？？//
     return;
 }
 
@@ -184,7 +188,8 @@ buddy_system_alloc_pages(size_t requested_pages)
         {
             allocated_page = le2page(list_next(&(buddy_array[order_of_2])), page_link);
             list_del(list_next(&(buddy_array[order_of_2]))); // 删除空闲链表中找到的空闲块
-            SetPageProperty(allocated_page);                 // 头页设置flags的第二位为1
+            // SetPageProperty(allocated_page);
+            ClearPageProperty(allocated_page); // 头页设置flags的第二位为0
             found = 1;
         }
         else
@@ -242,12 +247,12 @@ buddy_system_free_pages(struct Page *base, size_t n)
     // show_buddy_array(0, MAX_BUDDY_ORDER); // test point
     // 当伙伴块空闲，且当前块不为最大块时，执行合并
     buddy = get_buddy(left_block, left_block->property);
-    while (!PageProperty(buddy) && left_block->property < max_order)
+    while (PageProperty(buddy) && left_block->property < max_order)
     {
         if (left_block > buddy)
-        {                                  // 若当前左块为更大块的右块
-            left_block->property = -1;     // 将左块幂次置为无效
-            ClearPageProperty(left_block); // 设置其空闲
+        {                              // 若当前左块为更大块的右块
+            left_block->property = -1; // 将左块幂次置为无效
+            SetPageProperty(base);     // 将页面的标志设置为 PG_property，表示这是一个空闲块的第一个页面。
             // 交换左右使得位置正确
             tmp = left_block;
             left_block = buddy;
@@ -264,7 +269,7 @@ buddy_system_free_pages(struct Page *base, size_t n)
         // 重置buddy开启下一轮循环***
         buddy = get_buddy(left_block, left_block->property);
     }
-    ClearPageProperty(left_block); // 将回收块的头页设置为空闲
+    SetPageProperty(left_block); // 将回收块的头页设置为空闲
     nr_free += pnum;
     // show_buddy_array(); // test point
 
@@ -317,17 +322,17 @@ basic_check(void)
     assert(alloc_page() == NULL);
 
     // 清空看nr_free能不能变
-    cprintf("释放p0中。。。。。。");
+    cprintf("释放p0中。。。。。。\n");
     free_pages(p0, 5);
     cprintf("释放p0后，总空闲块数目为：%d\n", nr_free); // 变成了8
     show_buddy_array(0, MAX_BUDDY_ORDER);
 
-    cprintf("释放p1中。。。。。。");
+    cprintf("释放p1中。。。。。。\n");
     free_pages(p1, 5);
     cprintf("释放p1后，总空闲块数目为：%d\n", nr_free); // 变成了16
     show_buddy_array(0, MAX_BUDDY_ORDER);
 
-    cprintf("释放p2中。。。。。。");
+    cprintf("释放p2中。。。。。。\n");
     free_pages(p2, 5);
     cprintf("释放p2后，总空闲块数目为：%d\n", nr_free); // 变成了24
     show_buddy_array(0, MAX_BUDDY_ORDER);
@@ -349,67 +354,39 @@ basic_check(void)
 static void
 buddy_system_check(void)
 {
-    // int count = 0, total = 0;
-    // list_entry_t *le = &free_list;
-    // while ((le = list_next(le)) != &free_list)
-    // {
-    //     struct Page *p = le2page(le, page_link);
-    //     assert(PageProperty(p));
-    //     count++, total += p->property;
-    // }
-    // assert(total == nr_free_pages());
-
     basic_check();
 
-    // struct Page *p0 = alloc_pages(5), *p1, *p2;
-    // assert(p0 != NULL);
-    // assert(!PageProperty(p0));
+    // 一些复杂的操作
+    cprintf("==========开始测试一些复杂的例子==========\n");
+    cprintf("首先p0请求5页\n");
+    struct Page *p0 = alloc_pages(5), *p1, *p2;
+    assert(p0 != NULL);
+    assert(!PageProperty(p0));
+    show_buddy_array(0, MAX_BUDDY_ORDER);
 
-    // list_entry_t free_list_store = free_list;
-    // list_init(&free_list);
-    // assert(list_empty(&free_list));
-    // assert(alloc_page() == NULL);
+    cprintf("然后p1请求15页\n");
+    p1 = alloc_pages(15);
+    show_buddy_array(0, MAX_BUDDY_ORDER);
 
-    // unsigned int nr_free_store = nr_free;
-    // nr_free = 0;
+    cprintf("最后p2请求21页\n");
+    p2 = alloc_pages(21);
+    show_buddy_array(0, MAX_BUDDY_ORDER);
 
-    // free_pages(p0 + 2, 3);
-    // assert(alloc_pages(4) == NULL);
-    // assert(PageProperty(p0 + 2) && p0[2].property == 3);
-    // assert((p1 = alloc_pages(3)) != NULL);
-    // assert(alloc_page() == NULL);
-    // assert(p0 + 2 == p1);
+    cprintf("p0的虚拟地址0x%016lx.\n", p0);
+    cprintf("p1的虚拟地址0x%016lx.\n", p1);
+    cprintf("p2的虚拟地址0x%016lx.\n", p2);
 
-    // p2 = p0 + 1;
-    // free_page(p0);
-    // free_pages(p1, 3);
-    // assert(PageProperty(p0) && p0->property == 1);
-    // assert(PageProperty(p1) && p1->property == 3);
+    // 检查幂次正确
+    assert(p0->property == 3 && p1->property == 4 && p2->property == 5);
 
-    // assert((p0 = alloc_page()) == p2 - 1);
-    // free_page(p0);
-    // assert((p0 = alloc_pages(2)) == p2 + 1);
+    // 暂存p0，删后分配看看能不能找到
+    struct Page *temp = p0;
 
-    // free_pages(p0, 2);
-    // free_page(p2);
+    free_pages(p0, 5);
 
-    // assert((p0 = alloc_pages(5)) != NULL);
-    // assert(alloc_page() == NULL);
-
-    // assert(nr_free == 0);
-    // nr_free = nr_free_store;
-
-    // free_list = free_list_store;
-    // free_pages(p0, 5);
-
-    // le = &free_list;
-    // while ((le = list_next(le)) != &free_list)
-    // {
-    //     struct Page *p = le2page(le, page_link);
-    //     count--, total -= p->property;
-    // }
-    // assert(count == 0);
-    // assert(total == 0);
+    p0 = alloc_pages(5);
+    assert(p0 == temp);
+    show_buddy_array(0, MAX_BUDDY_ORDER);
 }
 
 // 这个结构体在

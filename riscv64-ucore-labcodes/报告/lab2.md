@@ -115,7 +115,24 @@ qemu pid=9773
 
 ### Challenge 3: 硬件的可用物理内存范围的获取方法（思考题）
 
+可以使用设备树来传递硬件信息给操作系统，包括可用的物理内存范围。设备树是一种数据结构，用于描述计算机硬件的各种属性，如内存大小、缓存大小、处理器类型等。OpenSBI 作为 RISC-V 架构上的固件层，可以利用设备树来提供硬件的相关信息给上层的操作系统
 
+
+
+设备树提供了一种标准的方法来描述系统硬件。在设备树中，内存通常由一个或多个“memory”节点描述，这些节点包含描述物理内存范围的属性。例如：
+
+```
+memory@80000000 {
+    device_type = "memory";
+    reg = <0x80000000 0x10000000>;
+};
+```
+
+
+
+
+
+OpenSBI 固件完成对于包括物理内存在内的各外设的扫描，将扫描结果以**设备树二进制对象（DTB，Device Tree Blob）**的格式保存在物理内存中的某个地方。而这个放置的物理地址将放在 `a1` 寄存器中，而将会把 HART ID （**HART，Hardware Thread，硬件线程，可以理解为执行的 CPU 核**）放在 `a0` 寄存器上。
 
 # 三、本实验重要知识点
 
@@ -288,3 +305,39 @@ qemu pid=9773
 ### 页表基址
 
 在翻译的过程中，我们首先需要知道树状页表的根节点的物理地址。这一般保存在一个特殊寄存器里。对于RISCV架构，是一个叫做`satp`（Supervisor Address Translation and Protection Register）的CSR。实际上，`satp`里面**存的不是最高级页表的起始物理地址，而是它所在的物理页号**。除了物理页号，`satp`还包含其他信息。
+
+
+
+# buddy_system设计文档
+
+数据结构
+
+```c
+/* buddy system 的结构体 */
+#define MAX_BUDDY_ORDER 14 // 0x7cb9 31929，不到2的15次方个页
+typedef struct
+{
+    unsigned int max_order;                       // 实际最大块的大小
+    list_entry_t free_array[MAX_BUDDY_ORDER + 1]; // 伙伴堆数组
+    unsigned int nr_free;                         // 伙伴系统中剩余的空闲块
+} free_buddy_t;
+```
+
+实现思路
+
+将之前的单个free_list拓展为一个free_list数组，数组的第i项负责维护大小为2^i个页的块。
+
+初始化函数`buddy_system_init`：数组中的每一个free_list的初始化，next prev指针指向自己
+
+初始化空闲内存块函数`buddy_system_init_memmap`：除了清除标记等，直接将最大的这个内存块的首页的free_list连接在数组最后一个元素的链表后面
+
+分配内存块函数`buddy_system_alloc_pages`：分配的内存块向上取到2的幂次的数，找到这个幂次大小的块对应的数组元素（free_list）查看这个链表中有没有空闲的块，有的话分配，没的话就从大的块中切割，**注意切割的时候设置好flags**
+
+释放内存函数`buddy_system_free_pages`：找到释放的块的大小及其对应的`free_array`数组下标，把块添加到对应下标的free_list中，然后检测是否存在内存块合并的情况（当两个空闲的内存块相邻的时候，也就是伙伴块相邻的时候可以合并），合并的时候从`free_array`数组中删除小块，添加一个大块，并且循环检测执行。
+
+寻找伙伴块函数`get_buddy`：可以使用下面的公式计算伙伴块地址buddyAddr：
+$$
+buddyAddr=blockAddr  \quad XOR \quad  blockSize
+$$
+但是由于我们的内存地址不是从0开始，而且我们只需要依照已知Page结构体的地址找到其伙伴Page结构体的地址，而一个Page结构体的大小为0x28，我们可以减去第一个Page结构体的地址，然后令相对地址和0x28*blockSize进行按位与操作，得到伙伴Page结构体的地址。
+

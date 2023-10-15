@@ -50,8 +50,8 @@ struct Page
 // 01表示这个页不被内核占用的，且空闲
 // 10表示这个页是是被占用块的头页
 
-// 第二位为0表示这个页是空闲的
-// 第二位为1表示这个页是占用块的头页
+// 第二位为0表示个页是空闲的，且不是空闲块的头页 或 是被占用块的头页
+// 第二位为1表示这个页是空闲块的头页
 
 #define SetPageReserved(page) set_bit(PG_reserved, &((page)->flags))
 #define ClearPageReserved(page) clear_bit(PG_reserved, &((page)->flags))
@@ -63,7 +63,7 @@ struct Page
 
 // convert list entry to page
 #define le2page(le, member) \
-    to_struct((le), struct Page, member)
+    to_struct((le), struct Page, member) // 由Page中链表的结构找到Page结构体的地址
 
 /* free_area_t - maintains a doubly linked list to record free (unused) pages */
 typedef struct
