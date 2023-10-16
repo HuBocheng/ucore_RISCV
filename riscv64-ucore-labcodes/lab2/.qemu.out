@@ -19,10 +19,10 @@ Runtime SBI Version    : 0.1
 
 PMP0: 0x0000000080000000-0x000000008001ffff (A)
 PMP1: 0x0000000000000000-0xffffffffffffffff (A,R,W,X)
-(THU.CST) os is loading ...
+(NKU.CST) os is loading ...
 Special kernel symbols:
   entry  0xffffffffc0200036 (virtual)
-  etext  0xffffffffc0201cba (virtual)
+  etext  0xffffffffc0201cf2 (virtual)
   edata  0xffffffffc0206018 (virtual)
   end    0xffffffffc0206480 (virtual)
 Kernel executable memory footprint: 26KB
@@ -32,6 +32,7 @@ physcial memory map:
 maxpa: 0x0000000088000000.
 npage: 0x0000000000088000.
 nbase: 0x0000000000080000.
+end pythical address: 0x0000000080206480.
 pages pythical address: 0x0000000080207000.
 pages[0] pythical address: 0x0000000080207000.
 pages[1] pythical address: 0x0000000080207028.

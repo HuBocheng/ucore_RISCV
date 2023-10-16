@@ -7,18 +7,20 @@ kern_entry:
     # t0 := 三级页表的虚拟地址，lui加载高20位进入t0，低12位为页内偏移量我们不需要
     # boot_page_table_sv39 是一个全局符号，它指向系统启动时使用的页表的开始位置
     lui     t0, %hi(boot_page_table_sv39)
-    # t1 := 0xffffffff40000000 即虚实映射偏移量
+    # t1 := 0xffffffff40000000 即虚实映射偏移量，这一步是得到虚实映射偏移量
     li      t1, 0xffffffffc0000000 - 0x80000000
     # t0 减去虚实映射偏移量 0xffffffff40000000，变为三级页表的物理地址
     sub     t0, t0, t1
-    # t0 >>= 12，变为三级页表的物理页号（物理地址右移12位得到物理页号）
+    # t0 >>= 12，变为三级页表的物理页号（物理地址右移12位抹除低12位后得到物理页号）
     srli    t0, t0, 12
 
     # t1 := 8 << 60，设置 satp 的 MODE 字段为 Sv39 39位虚拟地址模式
     li      t1, 8 << 60
     # 将刚才计算出的预设三级页表物理页号附加到 satp 中
+    //一个按位或操作把satp的MODE字段，高1000后面全0，和三级页表的物理页号t1合并到一起
     or      t0, t0, t1
     # 将算出的 t0(即新的MODE|页表基址物理页号) 覆盖到 satp 中
+    // satp放的是最高级页表的物理页号（44位），除此以外还有MODE字段（4位）、备用 ASID（address space identifier）16位
     csrw    satp, t0
     # 使用 sfence.vma 指令刷新 TLB
     sfence.vma

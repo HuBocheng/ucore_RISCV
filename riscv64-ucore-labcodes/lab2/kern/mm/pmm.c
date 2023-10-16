@@ -129,6 +129,7 @@ static void page_init(void)
     // kernel在0x8020 0000开始加载，在end[]结束, pages是剩下的页的开始，是一个指向物理页面数组的指针
     // ROUNDUP是一个宏或函数，将给定的地址向上舍入到最接近的 PGSIZE 边界。保证最后的指针指向4kB对齐的地址
     // 把page指针都指向内核所占内存空间结束后的第一页
+    cprintf("end pythical address: 0x%016lx.\n", PADDR((uintptr_t)end)); // test point
     pages = (struct Page *)ROUNDUP((void *)end, PGSIZE);
     cprintf("pages pythical address: 0x%016lx.\n", PADDR((uintptr_t)pages)); // test point
     // pages pythical address是0x8020 7000，有0x7000的位置被kernel映像占用
