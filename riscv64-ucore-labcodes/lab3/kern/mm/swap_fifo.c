@@ -25,18 +25,19 @@
  *              le2page (in memlayout.h), (in future labs: le2vma (in vmm.h), le2proc (in proc.h),etc.
  */
 
-list_entry_t pra_list_head;
+list_entry_t pra_list_head; // 全局的双向链表头，用于存储所有可换出的页面
 /*
  * (2) _fifo_init_mm: init pra_list_head and let  mm->sm_priv point to the addr of pra_list_head.
  *              Now, From the memory control struct mm_struct, we can access FIFO PRA
  */
 static int
 _fifo_init_mm(struct mm_struct *mm)
-{     
-     list_init(&pra_list_head);
-     mm->sm_priv = &pra_list_head;
-     //cprintf(" mm->sm_priv %x in fifo_init_mm\n",mm->sm_priv);
-     return 0;
+{
+    list_init(&pra_list_head);
+    mm->sm_priv = &pra_list_head;
+    // 上面这句这句将mm->sm_priv指针指向pra_list_head。这样，从内存管理结构mm_struct中，我们可以访问到FIFO页面置换算法的队列
+    //  cprintf(" mm->sm_priv %x in fifo_init_mm\n",mm->sm_priv);
+    return 0;
 }
 /*
  * (3)_fifo_map_swappable: According FIFO PRA, we should link the most recent arrival page at the back of pra_list_head qeueue
@@ -44,11 +45,15 @@ _fifo_init_mm(struct mm_struct *mm)
 static int
 _fifo_map_swappable(struct mm_struct *mm, uintptr_t addr, struct Page *page, int swap_in)
 {
-    list_entry_t *head=(list_entry_t*) mm->sm_priv;
-    list_entry_t *entry=&(page->pra_page_link);
- 
+    // struct mm_struct *mm：指向进程地址空间描述符的指针，表示当前页面所属的进程。
+    // uintptr_t addr：表示当前页面在进程地址空间中的虚拟地址。
+    // struct Page *page：指向 struct Page 结构体的指针，表示当前页面的信息。
+    // int swap_in：表示当前页面是否需要从交换空间中调入内存，如果需要则为 1，否则为 0。
+    list_entry_t *head = (list_entry_t *)mm->sm_priv; // 获取了指向FIFO队列头部的指针
+    list_entry_t *entry = &(page->pra_page_link);     // 获取了指向当前页面的指针
+
     assert(entry != NULL && head != NULL);
-    //record the page access situlation
+    // record the page access situlation
 
     //(1)link the most recent arrival page at the back of the pra_list_head qeueue.
     list_add(head, entry);
@@ -59,66 +64,70 @@ _fifo_map_swappable(struct mm_struct *mm, uintptr_t addr, struct Page *page, int
  *                            then set the addr of addr of this page to ptr_page.
  */
 static int
-_fifo_swap_out_victim(struct mm_struct *mm, struct Page ** ptr_page, int in_tick)
+_fifo_swap_out_victim(struct mm_struct *mm, struct Page **ptr_page, int in_tick)
 {
-     list_entry_t *head=(list_entry_t*) mm->sm_priv;
-         assert(head != NULL);
-     assert(in_tick==0);
-     /* Select the victim */
-     //(1)  unlink the  earliest arrival page in front of pra_list_head qeueue
-     //(2)  set the addr of addr of this page to ptr_page
-    list_entry_t* entry = list_prev(head);
-    if (entry != head) {
+    // 双重指针ptr_page（用于返回选定的"牺牲"页面
+    list_entry_t *head = (list_entry_t *)mm->sm_priv;
+    assert(head != NULL);
+    assert(in_tick == 0);
+    /* Select the victim */
+    //(1)  unlink the  earliest arrival page in front of pra_list_head qeueue
+    //(2)  set the addr of addr of this page to ptr_page
+    list_entry_t *entry = list_prev(head);
+    if (entry != head)
+    {
         list_del(entry);
         *ptr_page = le2page(entry, pra_page_link);
-    } else {
+    }
+    else
+    {
         *ptr_page = NULL;
     }
     return 0;
 }
 
 static int
-_fifo_check_swap(void) {
+_fifo_check_swap(void)
+{
     cprintf("write Virt Page c in fifo_check_swap\n");
     *(unsigned char *)0x3000 = 0x0c;
-    assert(pgfault_num==4);
+    assert(pgfault_num == 4);
     cprintf("write Virt Page a in fifo_check_swap\n");
     *(unsigned char *)0x1000 = 0x0a;
-    assert(pgfault_num==4);
+    assert(pgfault_num == 4);
     cprintf("write Virt Page d in fifo_check_swap\n");
     *(unsigned char *)0x4000 = 0x0d;
-    assert(pgfault_num==4);
+    assert(pgfault_num == 4);
     cprintf("write Virt Page b in fifo_check_swap\n");
     *(unsigned char *)0x2000 = 0x0b;
-    assert(pgfault_num==4);
+    assert(pgfault_num == 4);
     cprintf("write Virt Page e in fifo_check_swap\n");
     *(unsigned char *)0x5000 = 0x0e;
-    assert(pgfault_num==5);
+    assert(pgfault_num == 5);
     cprintf("write Virt Page b in fifo_check_swap\n");
     *(unsigned char *)0x2000 = 0x0b;
-    assert(pgfault_num==5);
+    assert(pgfault_num == 5);
     cprintf("write Virt Page a in fifo_check_swap\n");
     *(unsigned char *)0x1000 = 0x0a;
-    assert(pgfault_num==6);
+    assert(pgfault_num == 6);
     cprintf("write Virt Page b in fifo_check_swap\n");
     *(unsigned char *)0x2000 = 0x0b;
-    assert(pgfault_num==7);
+    assert(pgfault_num == 7);
     cprintf("write Virt Page c in fifo_check_swap\n");
     *(unsigned char *)0x3000 = 0x0c;
-    assert(pgfault_num==8);
+    assert(pgfault_num == 8);
     cprintf("write Virt Page d in fifo_check_swap\n");
     *(unsigned char *)0x4000 = 0x0d;
-    assert(pgfault_num==9);
+    assert(pgfault_num == 9);
     cprintf("write Virt Page e in fifo_check_swap\n");
     *(unsigned char *)0x5000 = 0x0e;
-    assert(pgfault_num==10);
+    assert(pgfault_num == 10);
     cprintf("write Virt Page a in fifo_check_swap\n");
     assert(*(unsigned char *)0x1000 == 0x0a);
     *(unsigned char *)0x1000 = 0x0a;
-    assert(pgfault_num==11);
+    assert(pgfault_num == 11);
     return 0;
 }
-
 
 static int
 _fifo_init(void)
@@ -134,17 +143,18 @@ _fifo_set_unswappable(struct mm_struct *mm, uintptr_t addr)
 
 static int
 _fifo_tick_event(struct mm_struct *mm)
-{ return 0; }
-
+{
+    return 0;
+}
 
 struct swap_manager swap_manager_fifo =
-{
-     .name            = "fifo swap manager",
-     .init            = &_fifo_init,
-     .init_mm         = &_fifo_init_mm,
-     .tick_event      = &_fifo_tick_event,
-     .map_swappable   = &_fifo_map_swappable,
-     .set_unswappable = &_fifo_set_unswappable,
-     .swap_out_victim = &_fifo_swap_out_victim,
-     .check_swap      = &_fifo_check_swap,
+    {
+        .name = "fifo swap manager",
+        .init = &_fifo_init,
+        .init_mm = &_fifo_init_mm,
+        .tick_event = &_fifo_tick_event,
+        .map_swappable = &_fifo_map_swappable,
+        .set_unswappable = &_fifo_set_unswappable,
+        .swap_out_victim = &_fifo_swap_out_victim,
+        .check_swap = &_fifo_check_swap,
 };
